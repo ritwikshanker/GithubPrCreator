@@ -2,8 +2,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 data class GitHubConfig(
     @JsonProperty("personalAccessToken")
-    val personalAccessToken: String = "",  // Default value added
+    val personalAccessToken: String = "",
 
     @JsonProperty("username")
-    val username: String = ""  // Default value added
+    val username: String = ""
 )
