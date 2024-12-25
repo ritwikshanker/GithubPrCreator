@@ -12,7 +12,11 @@ class GitHubPRCreator {
 
     private fun loadConfig(): GitHubConfig {
         val mapper = ObjectMapper(YAMLFactory())
-        return mapper.readValue(File("config.yml"), GitHubConfig::class.java)
+        return try {
+            mapper.readValue(File("config.yml"), GitHubConfig::class.java)
+        } catch (e: Exception) {
+            throw RuntimeException("Failed to load config.yml. Please ensure it exists and is correctly formatted.", e)
+        }
     }
 
     fun connect() {
@@ -48,29 +52,23 @@ class GitHubPRCreator {
         return repos[selection - 1].name
     }
 
-    fun createPullRequest(repoName: String) {
+    fun createPullRequest(repoName: String, branchName: String, filePath: String, fileContent: String) {
         val repo = github.getRepository("${config.username}/$repoName")
+        val masterBranch = repo.getBranch("master")
 
-        val mainBranch = repo.getBranch("master")
-        val branchName = "feature/add-hello-file"
-
-
-        repo.createRef("refs/heads/$branchName", mainBranch.shA1)
-
-        val content = "Hello world"
-
+        repo.createRef("refs/heads/$branchName", masterBranch.shA1)
         repo.createContent()
             .branch(branchName)
-            .path("Hello.txt")
-            .content(content)
-            .message("Add Hello.txt file")
+            .path(filePath)
+            .content(fileContent)
+            .message("Add $filePath")
             .commit()
 
         repo.createPullRequest(
-            "Add Hello.txt file",
+            "Add $filePath",
             branchName,
             "master",
-            "Adding Hello.txt file with 'Hello world' content"
+            "Adding $filePath with content"
         )
 
         println("\nPull request created successfully!")
@@ -79,7 +77,6 @@ class GitHubPRCreator {
 
 fun main() {
     val prCreator = GitHubPRCreator()
-
     try {
         println("Connecting to GitHub")
         prCreator.connect()
@@ -87,7 +84,12 @@ fun main() {
         val selectedRepo = prCreator.listAndSelectRepository()
         println("\nCreating pull request for repository: $selectedRepo")
 
-        prCreator.createPullRequest(selectedRepo)
+        prCreator.createPullRequest(
+            repoName = selectedRepo,
+            branchName = "feature/add-hello-file",
+            filePath = "Hello.txt",
+            fileContent = "Hello world"
+        )
     } catch (e: Exception) {
         println("An error occurred: ${e.message}")
     }
