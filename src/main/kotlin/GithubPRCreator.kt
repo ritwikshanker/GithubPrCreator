@@ -2,9 +2,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import org.kohsuke.github.GitHub
 import org.kohsuke.github.GitHubBuilder
+import org.slf4j.LoggerFactory
 import java.io.File
-import java.util.Scanner
-import java.util.InputMismatchException
+import java.util.*
 
 /**
  * This class creates a pull request on a GitHub repository.
@@ -12,6 +12,7 @@ import java.util.InputMismatchException
 class GitHubPRCreator {
     private lateinit var github: GitHub
     private val config: GitHubConfig = loadConfig()
+    private val logger = LoggerFactory.getLogger(GitHubPRCreator::class.java)
 
     /**
      * Loads the configuration from the "config.yml" file.
@@ -32,9 +33,15 @@ class GitHubPRCreator {
      * Connects to GitHub using the personal access token from the configuration.
      */
     fun connect() {
-        github = GitHubBuilder()
-            .withOAuthToken(config.personalAccessToken)
-            .build()
+        try {
+            github = GitHubBuilder()
+                .withOAuthToken(config.personalAccessToken)
+                .build()
+            logger.debug("Connected to GitHub successfully.")
+        } catch (e: Exception) {
+            logger.error("Failed to connect to GitHub.", e)
+            throw e
+        }
     }
 
     /**
@@ -60,7 +67,7 @@ class GitHubPRCreator {
                 if (selection in 1..repos.size) {
                     break
                 }
-                println("Invalid selection. Please try again.")
+                logger.warn("Invalid selection. Please try again.")
             } catch (e: InputMismatchException) {
                 println("Please enter a valid number.")
                 scanner.next()
