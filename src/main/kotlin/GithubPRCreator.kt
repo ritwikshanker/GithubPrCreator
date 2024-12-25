@@ -6,10 +6,19 @@ import java.io.File
 import java.util.Scanner
 import java.util.InputMismatchException
 
+/**
+ * This class creates a pull request on a GitHub repository.
+ */
 class GitHubPRCreator {
     private lateinit var github: GitHub
     private val config: GitHubConfig = loadConfig()
 
+    /**
+     * Loads the configuration from the "config.yml" file.
+     *
+     * @throws RuntimeException if the file cannot be loaded or is not formatted correctly.
+     * @return the loaded GitHubConfig object.
+     */
     private fun loadConfig(): GitHubConfig {
         val mapper = ObjectMapper(YAMLFactory())
         return try {
@@ -19,12 +28,20 @@ class GitHubPRCreator {
         }
     }
 
+    /**
+     * Connects to GitHub using the personal access token from the configuration.
+     */
     fun connect() {
         github = GitHubBuilder()
             .withOAuthToken(config.personalAccessToken)
             .build()
     }
 
+    /**
+     * Lists available repositories for the user and prompts the user to select one.
+     *
+     * @return the name of the selected repository.
+     */
     fun listAndSelectRepository(): String {
         val repos = github.getUser(config.username).repositories.values.toList()
 
@@ -52,6 +69,14 @@ class GitHubPRCreator {
         return repos[selection - 1].name
     }
 
+    /**
+     * Creates a pull request on the specified repository.
+     *
+     * @param repoName the name of the repository.
+     * @param branchName the name of the branch to create for the pull request.
+     * @param filePath the path to the file to add to the pull request.
+     * @param fileContent the content of the file to add.
+     */
     fun createPullRequest(repoName: String, branchName: String, filePath: String, fileContent: String) {
         val repo = github.getRepository("${config.username}/$repoName")
         val masterBranch = repo.getBranch("master")
